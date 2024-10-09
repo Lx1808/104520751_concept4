@@ -1,26 +1,22 @@
-from fastapi import APIRouter, File, UploadFile, Depends, BackgroundTasks
+from fastapi import APIRouter, File, UploadFile, Depends, BackgroundTasks, HTTPException, Query
 from fastapi.responses import JSONResponse
-from .utils import save_upload_file
+from .utils import save_upload_file, update_scan_result, get_daily_upload_counts
 from ..auth.utils import get_current_user
-from ..ml_model.scanner import scan_file
+from ..ml_model import predict_malware, classification_model, predict_processor_usage, prediction_model, prediction_scaler, df_hourly
 from ..core.database import files
 import os
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, date
 import pytz
-
+import pandas as pd
+import io
 
 router = APIRouter()
 
-
 UPLOAD_DIRECTORY = "uploaded_files"
-
 MELBOURNE_TZ = pytz.timezone('Australia/Melbourne')
 
 def serialize_document(doc):
-    """
-    序列化 MongoDB 文档，处理 ObjectId 和 datetime 对象
-    """
     if isinstance(doc, dict):
         return {k: serialize_document(v) for k, v in doc.items()}
     elif isinstance(doc, list):
@@ -48,7 +44,6 @@ async def create_upload_file(
 
     melbourne_time = datetime.now(MELBOURNE_TZ).isoformat()
 
-    # Create a file record in the database
     file_id = files.insert_one({
         "filename": file.filename,
         "location": file_location,
@@ -57,7 +52,6 @@ async def create_upload_file(
         "scan_status": "pending"
     }).inserted_id
 
-    # Run file scan as a background task
     background_tasks.add_task(scan_file, file_location, str(file_id))
 
     return JSONResponse(content={
@@ -79,12 +73,9 @@ async def get_scan_result(file_id: str, current_user: dict = Depends(get_current
         "scan_results": file.get('scan_results')
     }, status_code=200)
 
-
 @router.get("/user-files/")
 async def get_user_files(current_user: dict = Depends(get_current_user)):
     user_files = list(files.find({"user_id": current_user['_id']}))
-
-    # 序列化文件数据
     serialized_files = [serialize_document(file) for file in user_files]
 
     return JSONResponse(content={
@@ -92,3 +83,27 @@ async def get_user_files(current_user: dict = Depends(get_current_user)):
         "files": serialized_files
     }, status_code=200)
 
+
+@router.get("/daily-upload-counts")
+async def get_upload_counts(
+        start_date: date = Query(..., description="Start date (YYYY-MM-DD)"),
+        end_date: date = Query(..., description="End date (YYYY-MM-DD)"),
+        current_user: dict = Depends(get_current_user)
+):
+    if current_user['roles'] != 'admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    if start_date > end_date:
+        raise HTTPException(status_code=400, detail="Start date must be before or equal to end date")
+
+    counts = await get_daily_upload_counts(start_date, end_date)
+    return JSONResponse(content=counts, status_code=200)
+
+
+def scan_file(file_location: str, file_id: str):
+    try:
+        df = pd.read_csv(file_location, header=0)
+        results = predict_malware(df, classification_model)
+        update_scan_result(file_id, results, "completed")
+    except Exception as e:
+        update_scan_result(file_id, [{"error": str(e)}], "failed")

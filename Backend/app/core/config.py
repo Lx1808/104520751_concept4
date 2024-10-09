@@ -2,7 +2,6 @@ from typing import Optional
 from pydantic_settings import BaseSettings
 import os
 
-
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Virus Scanning Website"
     API_V1_STR: str = "/api/v1"
@@ -20,6 +19,11 @@ class Settings(BaseSettings):
     UPLOAD_DIRECTORY: str = "uploaded_files"
     MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024  # 50 MB
 
+    # ML model and data settings
+    BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    SAVED_MODEL_PATH: str = os.path.join(BASE_DIR, "app", "ml_model", "content")
+    DATA_PATH: str = os.path.join(BASE_DIR, "app", "ml_model", "content")
+
     class Config:
         env_file = ".env"
 
@@ -30,3 +34,7 @@ settings = Settings()
 if settings.MONGO_URI is None:
     settings.MONGO_URI = ("mongodb+srv://lx941008:lx79112661@cluster0.16uwt.mongodb.net/?retryWrites=true&w=majority"
                           "&appName=Cluster0")
+
+# 直接导出路径变量
+SAVED_MODEL_PATH = settings.SAVED_MODEL_PATH
+DATA_PATH = settings.DATA_PATH
