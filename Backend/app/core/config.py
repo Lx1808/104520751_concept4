@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-    # 数据库设置
+    # Database Settings
     MONGO_URI: Optional[str] = os.getenv("MONGO_URI")
     DATABASE_NAME: str = "Users"
     USER_COLLECTION_NAME: str = "users"
@@ -30,11 +30,11 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# 如果环境变量中没有设置 MONGO_URI，则使用默认值
+# Using the default value if there is no settings of MONGO_URI
 if settings.MONGO_URI is None:
     settings.MONGO_URI = ("mongodb+srv://lx941008:lx79112661@cluster0.16uwt.mongodb.net/?retryWrites=true&w=majority"
                           "&appName=Cluster0")
 
-# 直接导出路径变量
+# Export PATH variables straightly
 SAVED_MODEL_PATH = settings.SAVED_MODEL_PATH
 DATA_PATH = settings.DATA_PATH

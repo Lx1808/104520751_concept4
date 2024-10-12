@@ -99,6 +99,13 @@ async def get_upload_counts(
     counts = await get_daily_upload_counts(start_date, end_date)
     return JSONResponse(content=counts, status_code=200)
 
+@router.post("/predict/")
+async def predict_usage(start_date: str, end_date: str, current_user: dict = Depends(get_current_user)):
+    try:
+        results = predict_processor_usage(start_date, end_date, df_hourly, prediction_model, prediction_scaler)
+        return JSONResponse(content=results, status_code=200)
+    except Exception as e:
+        return JSONResponse(content={'error': str(e)}, status_code=400)
 
 def scan_file(file_location: str, file_id: str):
     try:
@@ -107,3 +114,4 @@ def scan_file(file_location: str, file_id: str):
         update_scan_result(file_id, results, "completed")
     except Exception as e:
         update_scan_result(file_id, [{"error": str(e)}], "failed")
+

@@ -1,8 +1,10 @@
 <template>
-  <div class="login-container">
+  <div class="login-container space-background">
     <nav class="top-nav">
-      <div class="logo"><!-- Add your logo here --></div>
-      <ul>
+      <div class="logo">
+        <img src="/Users/lixiang/Documents/COS70008/Project/Frontend/tip-design4/public/FaceLogo.png" alt="Logo" class="logo-image">
+      </div>
+      <ul class="nav-links">
         <li><a href="#">Home</a></li>
         <li><a href="#">About</a></li>
         <li><a href="#">Blog</a></li>
@@ -31,7 +33,7 @@
       </form>
     </main>
 
-    <!-- Register -->
+    <!-- Register Modal -->
     <div v-if="showRegistrationModal" class="modal">
       <div class="modal-content">
         <span class="close-btn" @click="showRegistrationModal = false">&times;</span>
@@ -56,6 +58,7 @@
 </template>
 
 <script>
+// Script remains unchanged
 import axios from 'axios';
 
 export default {
@@ -75,7 +78,7 @@ export default {
   },
   methods: {
     closeModal() {
-      this.showRegistrationModal = false; // 关闭模态框
+      this.showRegistrationModal = false;
     },
     async register() {
       if (this.password !== this.confirmPassword) {
@@ -85,25 +88,21 @@ export default {
       
       try {
         const response = await axios.post('http://0.0.0.0:8080/auth/register', {
-          username: this.email, // 将 email 作为 username
+          username: this.email,
           password: this.password,
           first_name: this.firstName,
           last_name: this.lastName,
           roles: this.roles
         });
 
-        // 如果注册成功，关闭模态框或重定向
         this.closeModal();
         alert(response.data.message || 'User registered successfully!');
 
       } catch (error) {
-        // 处理错误
         if (error.response) {
-          // 服务器返回的错误
-          this.errorMessage = error.response.data.detail || '注册失败，请重试。';
+          this.errorMessage = error.response.data.detail || 'Registration failed, please try again.';
         } else {
-          // 网络错误等
-          this.errorMessage = '无法连接到服务器，请稍后再试。';
+          this.errorMessage = 'Unable to connect to server, please try again later.';
         }
       }
     },
@@ -112,23 +111,19 @@ export default {
       this.errorMessage = '';
 
       try {
-        // 使用 FormData 发送表单数据
         const formData = new FormData();
-        formData.append('username', this.email);  // 这里需要是 username
-        formData.append('password', this.password); // 这里保持 password
+        formData.append('username', this.email);
+        formData.append('password', this.password);
 
         const response = await axios.post('http://0.0.0.0:8080/auth/token', formData, {
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded', // 确保请求类型为表单
+            'Content-Type': 'application/x-www-form-urlencoded',
           },
         });
 
         const token = response.data.access_token;
-
-        // 将 token 存储在 localStorage 中
         localStorage.setItem('userToken', token);
 
-        // 获取用户信息
         const userInfoResponse = await axios.get('http://0.0.0.0:8080/auth/users/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -136,7 +131,6 @@ export default {
         const userInfo = userInfoResponse.data;
         localStorage.setItem('userInfo', JSON.stringify(userInfo));
 
-        // 根据用户角色跳转
         if (userInfo.roles.includes('admin')) {
           this.$router.push('/admin-dashboard');
         } else {
@@ -144,11 +138,11 @@ export default {
         }
       } catch (error) {
         if (error.response) {
-          this.errorMessage = error.response.data.message || '登录失败，请检查您的凭证。';
+          this.errorMessage = error.response.data.message || 'Login failed, please check your credentials.';
         } else if (error.request) {
-          this.errorMessage = '无法连接到服务器，请稍后再试。';
+          this.errorMessage = 'Unable to connect to server, please try again later.';
         } else {
-          this.errorMessage = '发生错误，请稍后再试。';
+          this.errorMessage = 'An error occurred, please try again later.';
         }
       } finally {
         this.isLoading = false;
@@ -164,7 +158,6 @@ export default {
 <style scoped>
 .login-container {
   font-family: Arial, sans-serif;
-  background: linear-gradient(to bottom right, #ffffff, #e6e6fa);
   min-height: 100vh;
   width: 100vw;
   display: flex;
@@ -172,11 +165,91 @@ export default {
   position: relative;
 }
 
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.logo {
+  flex: 0 0 auto; /* Prevents the logo from growing or shrinking */
+}
+
+.logo-image {
+  max-height: 50px;
+  width: auto;
+}
+
+.nav-links {
+  display: flex;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  flex: 1 1 auto; /* Allows the nav links to grow and shrink */
+  justify-content: flex-start; /* Aligns items to the start of the container */
+  margin-left: 20px; /* Adds some space between the logo and nav links */
+}
+
+.nav-links li {
+  margin-right: 1rem;
+}
+
+.nav-links li:last-child {
+  margin-right: 0;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+}
+
+.register-btn {
+  flex: 0 0 auto; /* Prevents the button from growing or shrinking */
+  background-color: #8a2be2;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.space-background {
+  background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+  position: relative;
+  overflow: hidden;
+}
+
+.space-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+    radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+    radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px);
+  background-size: 550px 550px, 350px 350px, 250px 250px;
+  background-position: 0 0, 40px 60px, 130px 270px;
+  animation: twinkle 10s linear infinite;
+}
+
+@keyframes twinkle {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-550px); }
+}
+
 nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 nav ul {
@@ -188,12 +261,18 @@ nav ul li {
   margin-right: 1rem;
 }
 
+nav ul li a {
+  color: white;
+  text-decoration: none;
+}
+
 .register-btn {
   background-color: #8a2be2;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 20px;
+  cursor: pointer;
 }
 
 main {
@@ -205,19 +284,25 @@ main {
   text-align: center;
   width: 100vw;
   padding: 0;
+  position: relative;
+  z-index: 1;
 }
 
 h1 {
-  color: #8a2be2;
+  color: white;
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
 }
 
+p {
+  color: #cccccc;
+}
+
 form {
   width: 100%;
-  max-width: 400px; /* Optional to limit width of form */
+  max-width: 400px;
   margin-top: 2rem;
-  padding: 0 20px; /* Optional for padding */
+  padding: 0 20px;
 }
 
 .input-group {
@@ -230,6 +315,12 @@ input {
   padding: 0.5rem;
   border: 1px solid #d3d3d3;
   border-radius: 5px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+input::placeholder {
+  color: #cccccc;
 }
 
 .clear-btn, .toggle-password {
@@ -240,13 +331,14 @@ input {
   background: none;
   border: none;
   cursor: pointer;
+  color: white;
 }
 
 .forgot-password {
   display: block;
   text-align: right;
   margin-bottom: 1rem;
-  color: #8a2be2;
+  color: #cccccc;
   text-decoration: none;
 }
 
@@ -261,7 +353,7 @@ input {
 }
 
 .error-message {
-  color: red;
+  color: #ff6b6b;
   margin-top: 1rem;
 }
 
@@ -280,41 +372,27 @@ input {
   width: 100vw;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.5);
+  z-index: 2;
 }
 
 .modal-content {
-  background-color: #fff;
+  background-color: #24243e;
   padding: 20px;
   border-radius: 8px;
   width: 400px;
   text-align: center;
+  color: white;
 }
 
 .close-btn {
   float: right;
   font-size: 24px;
   cursor: pointer;
-}
-
-.input-group {
-  margin: 10px 0;
-  display: flex;
-  gap: 10px;
-}
-
-.submit-btn {
-  width: 100%;
-  background-color: #8a2be2;
   color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 5px;
-  cursor: pointer;
 }
 
 h2 {
   color: #8a2be2;
   margin-bottom: 20px;
 }
-
 </style>

@@ -20,7 +20,7 @@ def get_file_size(file_path: str) -> int:
     return os.path.getsize(file_path)
 
 def update_scan_result(file_id: str, scan_results: List[Dict[str, any]], scan_status: str):
-    # 更新数据库中的扫描结果
+    # Update the scan status in database
     files.update_one(
         {"_id": ObjectId(file_id)},
         {"$set": {"scan_results": scan_results, "scan_status": scan_status}}

@@ -115,5 +115,5 @@ async def get_all_users(current_user: dict = Depends(get_current_user)):
     if current_user['roles'] != 'admin':
         raise HTTPException(status_code=403, detail="Admin access required")
 
-    user_list = list(users.find({}, {"_id": 0, "username": 1, "roles": 1, "first_name": 1}))
+    user_list = list(users.find({}, {"_id": 0, "username": 1, "roles": 1, "first_name": 1, "last_name": 1}))
     return user_list
